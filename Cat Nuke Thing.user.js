@@ -6,9 +6,9 @@
 // @author       Cat
 // @match        https://www.nationstates.net/*
 // @include      */nday_links.html
-// @require  https://craig.global.ssl.fastly.net/js/mousetrap/mousetrap.min.js?a4098
-// @grant              GM_getValue
-// @grant              GM_setValue
+// @require      https://craig.global.ssl.fastly.net/js/mousetrap/mousetrap.min.js?a4098
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @grant        window.close
 // ==/UserScript==
 
@@ -149,7 +149,30 @@ function update() {
             }
         }
     }
+    
+    if (inHref("page=faction") && inHref("view=nations")) {
+        document.querySelector('#content > h2:nth-child(4)').outerHTML += '<sub id="was-notif">Loading WAs...</sub>';
+        var nations = document.querySelectorAll('#content > ol > li');
 
+        var request = new XMLHttpRequest();
+        request.open('GET', 'https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=members&user_agent=Cat Nuke Thing by Catiania; relevant code by The Ice States', true);
+        request.onload = function(){
+            for(var item = 0; item < nations.length; item++){
+                if(!nations[item].querySelector('.icon-monument')){ // Don't bother with CTE nations
+                    var natName = nations[item].querySelector('.nlink').href.split('/page=nukes')[0].split('nation=')[1];
+                    if(request.responseXML.querySelector('MEMBERS').innerHTML.split(',').indexOf(natName) != -1){
+                        nations[item].innerHTML += '<img src="https://www.nationstates.net/images/waflag.svg" width="16px" alt="WA">';
+                    }
+                }
+            }
+            document.querySelector('#was-notif').innerHTML = 'WAs loaded';
+        }
+        request.onerror = function(){
+            document.querySelector('#was-notif').innerHTML = 'Failed to load WAs';
+        }
+        request.send();
+    }
+    
     if (inHref("page=nukes?target=")) {
         // calculate how much rads the nation is already getting and alert if it's over 100
         let radiation = numberFromIndicator('.nukestat-radiation')
